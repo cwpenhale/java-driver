@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.core.config;
 
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
+import com.datastax.oss.driver.internal.core.config.composite.CompositeDriverConfigLoader;
 import com.datastax.oss.driver.internal.core.config.map.MapBasedDriverConfigLoader;
 import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoader;
 import com.datastax.oss.driver.internal.core.config.typesafe.DefaultProgrammaticDriverConfigLoaderBuilder;
@@ -263,6 +264,20 @@ public interface DriverConfigLoader extends AutoCloseable {
   @NonNull
   static DriverConfigLoader fromMap(@NonNull OptionsMap source) {
     return new MapBasedDriverConfigLoader(source, source.asRawMap());
+  }
+
+  /**
+   * Combines two existing loaders into a new one.
+   *
+   * <p>When the driver reads an option, the config managed by the "primary" loader will be queried
+   * first. If the option is missing, then it will be looked up in the config managed by the
+   * "fallback" loader.
+   */
+  @NonNull
+  static DriverConfigLoader compose(
+      @NonNull DriverConfigLoader primaryConfigLoader,
+      @NonNull DriverConfigLoader fallbackConfigLoader) {
+    return new CompositeDriverConfigLoader(primaryConfigLoader, fallbackConfigLoader);
   }
 
   /**
